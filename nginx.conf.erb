@@ -1,0 +1,43 @@
+worker_processes 1;
+error_log stderr;
+pid nginx.pid;
+daemon off;
+
+events {
+  use epoll;
+  accept_mutex on;
+  worker_connections 1024;
+}
+
+http {
+  gzip on;
+  gzip_comp_level 2;
+  gzip_min_length 512;
+
+  server_tokens off;
+
+  include mime.types;
+  default_type application/octet-stream;
+  sendfile on;
+
+  server {
+    listen <%= ENV["PORT"] %>;
+    server_name _;
+    keepalive_timeout 5;
+
+    location / {
+      resolver               8.8.4.4 8.8.8.8 valid=300s;
+      resolver_timeout       10s;
+      proxy_pass http://$host.s3-website-eu-west-1.amazonaws.com/index.html;
+    }
+
+    location ~* .(ogg|ogv|svg|svgz|eot|otf|woff|mp4|ttf|css|rss|atom|js|jpg|jpeg|gif|png|ico|zip|tgz|gz|rar|bz2|doc|xls|exe|ppt|tar|mid|midi|wav|bmp|rtf|html|txt|htm)$ {
+      expires max;
+      add_header Cache-Control public;
+      fastcgi_hide_header Set-Cookie;
+      resolver               8.8.4.4 8.8.8.8 valid=300s;
+      resolver_timeout       10s;
+      proxy_pass http://$host.s3-website-eu-west-1.amazonaws.com;
+    }
+  }
+}
