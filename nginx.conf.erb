@@ -20,15 +20,16 @@ http {
   default_type application/octet-stream;
   sendfile on;
 
+  proxy_cache_path /cache keys_zone=one:10m;
+
   server {
     listen <%= ENV["PORT"] %>;
     server_name _;
     keepalive_timeout 5;
+    proxy_cache one;
 
     location / {
-      resolver               8.8.4.4 8.8.8.8 valid=300s;
-      resolver_timeout       10s;
-      proxy_pass http://$host.s3-website-eu-west-1.amazonaws.com/index.html;
+      rewrite ^(.*)$ /index.html;
     }
 
     location ~* .(ogg|ogv|svg|svgz|eot|otf|woff|mp4|ttf|css|rss|atom|js|jpg|jpeg|gif|png|ico|zip|tgz|gz|rar|bz2|doc|xls|exe|ppt|tar|mid|midi|wav|bmp|rtf|html|txt|htm)$ {
